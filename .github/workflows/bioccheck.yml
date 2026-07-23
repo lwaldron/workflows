@@ -137,11 +137,13 @@ jobs:
           BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)
 
       - name: Test Coverage
-        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && secrets.CODECOV_TOKEN != ''
+        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && env.CODECOV_TOKEN != ''
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         shell: Rscript {0}
         run: |
           cov <- covr::package_coverage()
-          covr::codecov(coverage = cov, token = "${{ secrets.CODECOV_TOKEN }}")
+          covr::codecov(coverage = cov, token = Sys.getenv("CODECOV_TOKEN"))
 
       - name: Build and Deploy pkgdown Site
         if: success() && inputs.enable_pkgdown && needs.set-matrix.outputs.is_release_branch == 'true'
