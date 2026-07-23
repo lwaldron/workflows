@@ -90,6 +90,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
       GITHUB_PAT: ${{ github.token }}
       _R_CHECK_CRAN_INCOMING_REMOTE_: 'false'
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -138,8 +139,6 @@ jobs:
 
       - name: Test Coverage
         if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && env.CODECOV_TOKEN != ''
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         shell: Rscript {0}
         run: |
           cov <- covr::package_coverage()
