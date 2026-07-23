@@ -1,0 +1,143 @@
+name: Bioc Container Check
+
+on:
+  workflow_call:
+    inputs:
+      enable_docker:
+        description: 'Enable Docker build/push job'
+        required: false
+        type: boolean
+        default: false
+      enable_pkgdown:
+        description: 'Enable pkgdown site build and deployment'
+        required: false
+        type: boolean
+        default: false
+      bioc_version:
+        description: 'Override Bioconductor version/container tag (e.g. devel, RELEASE_3_20). Auto-derived if empty.'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      CODECOV_TOKEN:
+        description: 'Token for uploading coverage to Codecov'
+        required: false
+      GITHUB_TOKEN:
+        description: 'GitHub token for package installation and pkgdown deploy'
+        required: false
+
+jobs:
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.matrix.outputs.docker_tag }}
+      is_release_branch: ${{ steps.matrix.outputs.is_release_branch }}
+      checkout_ref: ${{ steps.matrix.outputs.checkout_ref }}
+    steps:
+      - name: Set Matrix Variables
+        id: matrix
+        run: |
+          OVERRIDE_TAG="${{ inputs.bioc_version }}"
+
+          if [ -n "$OVERRIDE_TAG" ]; then
+            DOCKER_TAG="$OVERRIDE_TAG"
+            REF_NAME="${GITHUB_REF_NAME}"
+          else
+            # For PRs, use the target base branch; for pushes, use the pushed branch.
+            if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+              REF_NAME="${{ github.base_ref }}"
+            else
+              REF_NAME="${GITHUB_REF_NAME}"
+            fi
+
+            # Derive the container tag from the branch name.
+            # Valid ghcr.io/bioconductor/bioconductor_docker tags: devel, RELEASE_X_Y
+            if [[ "${REF_NAME}" =~ ^RELEASE_ ]]; then
+              DOCKER_TAG="${REF_NAME}"
+            elif [[ "${REF_NAME}" == "devel" || "${REF_NAME}" == "master" || "${REF_NAME}" == "main" ]]; then
+              DOCKER_TAG="devel"
+            else
+              echo "::warning::Branch '${REF_NAME}' is not 'devel', 'master', 'main', or 'RELEASE_*'; defaulting to devel container."
+              DOCKER_TAG="devel"
+            fi
+          fi
+
+          if [[ "${REF_NAME}" =~ ^RELEASE_ ]]; then
+            IS_RELEASE="true"
+          else
+            IS_RELEASE="false"
+          fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            CHECKOUT_REF="${{ github.event.pull_request.head.sha }}"
+          else
+            CHECKOUT_REF="${GITHUB_SHA}"
+          fi
+
+          echo "docker_tag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
+          echo "is_release_branch=${IS_RELEASE}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${CHECKOUT_REF}" >> $GITHUB_OUTPUT
+          echo "Resolved DOCKER_TAG=${DOCKER_TAG}, IS_RELEASE=${IS_RELEASE}, CHECKOUT_REF=${CHECKOUT_REF}"
+
+  check:
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    container:
+      image: bioconductor/bioconductor_docker:${{ needs.set-matrix.outputs.docker_tag }}
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN || github.token }}
+      _R_CHECK_CRAN_INCOMING_REMOTE_: 'false'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.set-matrix.outputs.checkout_ref }}
+
+      - name: Query R and System Dependencies
+        id: get-deps
+        shell: Rscript {0}
+        run: |
+          options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest", BiocManager::repositories()))
+          if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+          deps <- remotes::dev_package_deps(".", dependencies = TRUE)
+          saveRDS(deps, ".github/depends.Rds")
+          writeLines(sprintf("R-%i.%i", R.version$major, floor(as.numeric(R.version$minor))), ".github/R-version")
+
+      - name: Cache R Packages
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/R/site-library
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+
+      - name: Install Package Dependencies
+        shell: Rscript {0}
+        run: |
+          options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest", BiocManager::repositories()))
+          remotes::install_local(".", dependencies = TRUE, Ncpus = parallel::detectCores())
+          BiocManager::install(c("rcmdcheck", "BiocCheck", "covr", "pkgdown"), Ncpus = parallel::detectCores())
+
+      - name: Run R CMD check
+        shell: Rscript {0}
+        run: |
+          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "warning")
+          print(res)
+
+      - name: Run BiocCheck
+        shell: Rscript {0}
+        run: |
+          BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)
+
+      - name: Test Coverage
+        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && secrets.CODECOV_TOKEN != ''
+        shell: Rscript {0}
+        run: |
+          cov <- covr::package_coverage()
+          covr::codecov(coverage = cov, token = "${{ secrets.CODECOV_TOKEN }}")
+
+      - name: Build and Deploy pkgdown Site
+        if: success() && inputs.enable_pkgdown && needs.set-matrix.outputs.is_release_branch == 'true'
+        shell: Rscript {0}
+        run: |
+          pkgdown::build_site()
