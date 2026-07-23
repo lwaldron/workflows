@@ -13,6 +13,11 @@ on:
         required: false
         type: boolean
         default: false
+      error_on:
+        description: 'Error policy for rcmdcheck (never, note, warning, error)'
+        required: false
+        type: string
+        default: 'warning'
       bioc_version:
         description: 'Override Bioconductor version/container tag (e.g. devel, RELEASE_3_20). Auto-derived if empty.'
         required: false
@@ -121,7 +126,7 @@ jobs:
       - name: Run R CMD check
         shell: Rscript {0}
         run: |
-          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "warning")
+          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "${{ inputs.error_on }}")
           print(res)
 
       - name: Run BiocCheck
