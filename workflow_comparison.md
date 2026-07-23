@@ -1,6 +1,6 @@
 # Comparison & Diff: `bioccheck.yml` vs `waldronlab/bioc-pr-cmdcheck-pkgdown.yml`
 
-This document outlines the design decisions and technical differences between the new **`lwaldron/.github/.github/workflows/bioccheck.yml`** workflow and the upstream **`waldronlab/.github/.github/workflows/bioc-pr-cmdcheck-pkgdown.yml`** workflow.
+This document outlines the design decisions and technical differences between the new **`lwaldron/workflows/.github/workflows/bioccheck.yml`** workflow and the upstream **`waldronlab/.github/.github/workflows/bioc-pr-cmdcheck-pkgdown.yml`** workflow.
 
 ---
 

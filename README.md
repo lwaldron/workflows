@@ -1,6 +1,6 @@
 # Bioconductor GitHub Actions Workflows
 
-This repository (`lwaldron/.github`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
+This repository (`lwaldron/workflows`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
 
 ---
 
@@ -10,7 +10,7 @@ Two complementary workflows are available depending on your testing goals:
 
 | Purpose | Workflow Reference | Target Environment | Managed By |
 | :--- | :--- | :--- | :--- |
-| **1. Rapid Feedback Check** | `lwaldron/.github/.github/workflows/bioccheck.yml@v1` | Linux (`bioconductor_docker` container) | Bioconductor Core Team / Maintainers |
+| **1. Rapid Feedback Check** | `lwaldron/workflows/.github/workflows/bioccheck.yml@v1` | Linux (`bioconductor_docker` container) | Bioconductor Core Team / Maintainers |
 | **2. Comprehensive Pre-Release Check** | `r-universe-org/workflows/.github/workflows/build.yml@v3` | Multi-OS (Linux, macOS, Windows, WebAssembly) + `BiocCheck` | R-Universe Team |
 
 ---
@@ -40,7 +40,7 @@ on:
 
 jobs:
   check:
-    uses: lwaldron/.github/.github/workflows/bioccheck.yml@v1
+    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
     with:
       enable_pkgdown: false
       error_on: 'warning'
