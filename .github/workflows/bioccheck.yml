@@ -27,9 +27,6 @@ on:
       CODECOV_TOKEN:
         description: 'Token for uploading coverage to Codecov'
         required: false
-      GITHUB_TOKEN:
-        description: 'GitHub token for package installation and pkgdown deploy'
-        required: false
 
 jobs:
   set-matrix:
@@ -91,7 +88,7 @@ jobs:
       image: bioconductor/bioconductor_docker:${{ needs.set-matrix.outputs.docker_tag }}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN || github.token }}
+      GITHUB_PAT: ${{ github.token }}
       _R_CHECK_CRAN_INCOMING_REMOTE_: 'false'
     steps:
       - name: Checkout Repository
