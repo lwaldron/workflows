@@ -124,9 +124,14 @@ jobs:
           BiocManager::install(c("rcmdcheck", "BiocCheck", "covr", "pkgdown"), Ncpus = parallel::detectCores())
 
       - name: Run R CMD check
+        env:
+          RCMDCHECK_ERROR_ON: ${{ inputs.error_on }}
         shell: Rscript {0}
         run: |
-          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "${{ inputs.error_on }}")
+          allowed <- c("never", "note", "warning", "error")
+          error_on <- Sys.getenv("RCMDCHECK_ERROR_ON", unset = "warning")
+          if (!error_on %in% allowed) stop("Invalid error_on value: ", error_on)
+          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = error_on)
           print(res)
 
       - name: Run BiocCheck
