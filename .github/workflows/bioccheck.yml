@@ -130,7 +130,7 @@ jobs:
         run: |
           allowed <- c("never", "note", "warning", "error")
           error_on <- Sys.getenv("RCMDCHECK_ERROR_ON", unset = "warning")
-          if (!error_on %in% allowed) stop("Invalid error_on value: ", error_on)
+          if (!error_on %in% allowed) stop("Invalid error_on value: '", error_on, "'. Must be one of: ", paste(allowed, collapse = ", "))
           res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = error_on)
           print(res)
 
