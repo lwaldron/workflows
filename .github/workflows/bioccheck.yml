@@ -90,6 +90,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
       GITHUB_PAT: ${{ github.token }}
       _R_CHECK_CRAN_INCOMING_REMOTE_: 'false'
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -137,11 +138,11 @@ jobs:
           BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)
 
       - name: Test Coverage
-        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && secrets.CODECOV_TOKEN != ''
+        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && env.CODECOV_TOKEN != ''
         shell: Rscript {0}
         run: |
           cov <- covr::package_coverage()
-          covr::codecov(coverage = cov, token = "${{ secrets.CODECOV_TOKEN }}")
+          covr::codecov(coverage = cov, token = Sys.getenv("CODECOV_TOKEN"))
 
       - name: Build and Deploy pkgdown Site
         if: success() && inputs.enable_pkgdown && needs.set-matrix.outputs.is_release_branch == 'true'
