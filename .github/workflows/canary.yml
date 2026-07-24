@@ -1,7 +1,7 @@
 name: Canary Check
 
 # Runs on a weekly schedule and on-demand to verify that bioccheck.yml
-# executes correctly end-to-end against the current Bioconductor containers.
+# executes correctly end-to-end against the Bioconductor container tag derived from the branch (main => devel).
 # Uses error_on: "never" so expected BiocCheck notes from this stub package
 # (no vignettes, no NEWS, etc.) do not cause a false failure.
 
