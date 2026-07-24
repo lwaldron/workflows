@@ -139,8 +139,48 @@ jobs:
           cov <- covr::package_coverage()
           covr::codecov(coverage = cov, token = Sys.getenv("CODECOV_TOKEN"))
 
-      - name: Build and Deploy pkgdown Site
-        if: success() && inputs.enable_pkgdown && needs.set-matrix.outputs.is_release_branch == 'true'
+      - name: Build pkgdown Site
+        if: >-
+          ${{
+            success()
+            && inputs.enable_pkgdown
+            && github.event_name != 'pull_request'
+            && needs.set-matrix.outputs.is_release_branch == 'true'
+          }}
         shell: Rscript {0}
         run: |
           pkgdown::build_site()
+
+      - name: Upload pkgdown artifact
+        if: >-
+          ${{
+            success()
+            && inputs.enable_pkgdown
+            && github.event_name != 'pull_request'
+            && needs.set-matrix.outputs.is_release_branch == 'true'
+          }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs:
+      - check
+      - set-matrix
+    if: >-
+      ${{
+        inputs.enable_pkgdown
+        && github.event_name != 'pull_request'
+        && needs.set-matrix.outputs.is_release_branch == 'true'
+      }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

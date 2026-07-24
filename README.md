@@ -39,10 +39,26 @@ on:
     branches: [ devel, main, master, RELEASE_* ]
 
 jobs:
-  check:
+  bioccheck:
     uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
     with:
       enable_pkgdown: false
+      error_on: 'warning'
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+```
+
+When `enable_pkgdown: true`, the calling job must grant the permissions required for GitHub Pages deployment. The reusable workflow's `deploy` job declares `pages: write` and `id-token: write`, but these permissions must also be granted by the caller because GitHub Actions enforces the intersection of caller and called workflow permissions:
+
+```yaml
+jobs:
+  bioccheck:
+    permissions:
+      pages: write
+      id-token: write
+    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
+    with:
+      enable_pkgdown: true
       error_on: 'warning'
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
