@@ -14,10 +14,10 @@ How do we structure the canary so it continuously validates the deployed workflo
 
 ## Decision
 
-We will make the `lwaldron/workflows` repository itself a minimal, valid R package by adding a `DESCRIPTION` file to its root. The canary workflow (`.github/workflows/canary.yml`) then calls `bioccheck.yml@main` — targeting the published `main` branch — with `error_on: "never"` to suppress expected BiocCheck notes on the stub package.
+We will make the `lwaldron/workflows` repository itself a minimal, valid R package by adding a `DESCRIPTION` file to its root. The canary workflow (`.github/workflows/canary.yml`) then calls the local reusable workflow using relative path syntax `uses: ./.github/workflows/bioccheck.yml` with `error_on: "never"` to suppress expected BiocCheck notes on the stub package.
 
 Key specifics of the decision:
-- **`@main` reference**: The canary calls `uses: lwaldron/workflows/.github/workflows/bioccheck.yml@main` rather than the local `uses: ./.github/workflows/bioccheck.yml`. This ensures the scheduled run validates the *deployed* version of the workflow, not an unmerged branch.
+- **Relative Path Reference**: GitHub Actions strictly requires same-repository reusable workflows to be called using relative path syntax (`uses: ./.github/workflows/bioccheck.yml`). Using fully-qualified names (e.g. `owner/repo/path@ref`) for same-repository calls causes runtime "invalid workflow file" errors in GitHub Actions.
 - **`error_on: "never"`**: The stub `DESCRIPTION` intentionally has no vignettes, NEWS file, or ORCID. `BiocCheck` would emit notes for all of these. Setting `error_on: "never"` means the canary logs these expected notes without failing, isolating true environmental failures (broken containers, missing packages) from expected stub-related noise.
 
 ## Alternatives Considered
