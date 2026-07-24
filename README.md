@@ -30,7 +30,7 @@ The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the o
 * **Integrated Checks**: Executes `R CMD check` (configurable error threshold via `error_on`) and `BiocCheck` (with `quit-with-status = TRUE`).
 * **Optional Features**: Test coverage reporting via Codecov and `pkgdown` site build/deployment.
 
-### Example Usage (`.github/workflows/bioccheck.yml` in your package repo)
+### Basic Usage (`.github/workflows/bioccheck.yml` in your package repo)
 
 ```yaml
 name: CI
@@ -47,18 +47,47 @@ jobs:
     with:
       enable_pkgdown: false
       error_on: 'warning'
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 ```
 
-When `enable_pkgdown: true`, the calling job must grant the permissions required for GitHub Pages deployment. The reusable workflow's `deploy` job declares `pages: write` and `id-token: write`, but these permissions must also be granted by the caller because GitHub Actions enforces the intersection of caller and called workflow permissions:
+### Enabling Test Coverage (`covr` & Codecov)
+
+To measure test coverage using `covr` and upload results to [Codecov](https://about.codecov.io/):
+
+1. **Obtain Codecov Token**: Log in to Codecov, link your repository, and copy the repository upload token.
+2. **Set Repository Secret**: In your GitHub repository, navigate to **Settings** &rarr; **Secrets and variables** &rarr; **Actions** &rarr; **New repository secret**. Create a secret named `CODECOV_TOKEN` containing your token.
+3. **Pass Secret to Reusable Workflow**: Pass the secret under `secrets` in your workflow:
 
 ```yaml
 jobs:
   bioccheck:
+    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
+    with:
+      error_on: 'warning'
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+```
+
+*Note: Coverage calculation via `covr::package_coverage()` is executed on non-release branch pushes and pull requests when `CODECOV_TOKEN` is present.*
+
+### Enabling `pkgdown` on GitHub Pages
+
+To automatically build your `pkgdown` site and deploy it to GitHub Pages:
+
+1. **Configure GitHub Pages Source**:
+   * In your package repository on GitHub, navigate to **Settings** &rarr; **Pages**.
+   * Under **Build and deployment** &rarr; **Source**, select **GitHub Actions** (do NOT select "Deploy from a branch").
+2. **Add Deployment Permissions to Your Workflow Job**:
+   * In your package's workflow file (e.g. `.github/workflows/ci.yml`), add a `permissions:` block containing `pages: write` and `id-token: write` directly under the job that invokes `bioccheck`.
+   * *Why this is needed:* Reusable workflows inherit only the permissions granted by the caller job. Even though `bioccheck.yml` declares Pages permissions internally, GitHub Actions requires the caller job to explicitly grant them as well.
+3. **Enable `pkgdown` Input**: Set `enable_pkgdown: true` in `with:`.
+
+```yaml
+# In your package repo: .github/workflows/ci.yml
+jobs:
+  bioccheck:
     permissions:
-      pages: write
-      id-token: write
+      pages: write      # Required for uploading/deploying to GitHub Pages
+      id-token: write   # Required for GitHub Pages OIDC authentication
     uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
     with:
       enable_pkgdown: true
@@ -66,6 +95,8 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 ```
+
+*Note: The `pkgdown` site is built with `pkgdown::build_site()` and deployed to GitHub Pages on pushes to release branches (`RELEASE_*`).*
 
 ---
 
