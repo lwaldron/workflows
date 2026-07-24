@@ -12,45 +12,44 @@ This document outlines the design decisions and technical differences between th
 | **Branch Override** | None | Optional `bioc_version` input parameter | Allows callers to manually override the container tag (e.g. `bioc_version: "RELEASE_3_20"`). |
 | **`rcmdcheck` Severity (`error_on`)** | Hardcoded to `"error"` | **Configurable input `error_on`** (default: `"warning"`) | Allows workflows to strictly fail on warnings by default, or be set to `"error"` or `"never"`. |
 | **Package Installation Method** | `remotes::install_deps()` + `BiocManager::install()` | `remotes::install_local(".", dependencies = TRUE)` | Explicitly builds and installs the local package under test in addition to installing its dependencies. |
-| **`BiocCheck` Target Directory** | Runs on the `.tar.gz` produced in a `./check` subfolder | Runs directly on `.` (source root) | Eliminates extra dependencies on `check/` tarball artifacts. |
-| **`BiocCheck` Flags** | Suppresses help checks (`no-check-bioc-help = TRUE`) | Standard `BiocCheck::BiocCheck(".", quit-with-status = TRUE)` | Follows standard Bioconductor check behavior without suppressing help checks. |
-| **`pkgdown` Deployment** | Uses a separate `deploy` job with `actions/deploy-pages@v4` | Runs `pkgdown::build_site()` inline | Kept simple without requiring extra GitHub Pages workspace permissions. |
-| **Docker Hub Image Push (`dock` job)** | Includes a job to build and push Docker images to Docker Hub | Omitted | Keeps general package CI focused on package checking without requiring Docker Hub credentials. |
+| **`pkgdown` Deployment** | Always enabled by default (`enable_pkgdown: true`) | **Opt-in (`enable_pkgdown: false` default)** + GitHub Pages deployment | Core CI functionality works out-of-the-box without requiring GitHub Pages setup or elevated permissions unless enabled (ADR 0005). |
+| **Docker Hub Image Push (`dock` job)** | Includes a job to build and push Docker images to Docker Hub | Omitted (removed unused `enable_docker` input) | Can add as an opt-in feature later. |
 
 ---
 
 ## 2. Full Unified Diff
 
-Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` (left/minus) with `Bioconductor/.github/workflows/bioccheck.yml` (right/plus):
+Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` (left/minus) with `lwaldron/workflows/.github/workflows/bioccheck.yml` (right/plus):
 
 ```diff
 --- waldronlab/bioc-pr-cmdcheck-pkgdown.yml
-+++ Bioconductor/bioccheck.yml
++++ lwaldron/workflows/.github/workflows/bioccheck.yml
 @@ -1,4 +1,4 @@
 -name: Bioc PR CMD check & (optional) pkgdown + Docker
 +name: Bioc Container Check
  
  on:
    workflow_call:
-@@ -19,26 +19,25 @@
+@@ -19,26 +19,19 @@
          description: "If true, build + deploy pkgdown when on a RELEASE_* branch push"
          required: false
          type: boolean
 -        default: true
-+        default: false
-       enable_docker:
-         description: "If true, build/push docker when Dockerfile exists and on devel push"
-         required: false
-         type: boolean
+-      enable_docker:
+-        description: "If true, build/push docker when Dockerfile exists and on devel push"
+-        required: false
+-        type: boolean
 -        default: true
 -      dockerfile_path:
 -        description: "Path to Dockerfile to build (if present)"
+-        required: false
+-        type: string
+-        default: "inst/docker/pkg/Dockerfile"
 +        default: false
 +      error_on:
 +        description: 'Error policy for rcmdcheck (never, note, warning, error)'
-         required: false
-         type: string
--        default: "inst/docker/pkg/Dockerfile"
++        required: false
++        type: string
 +        default: 'warning'
 +      bioc_version:
 +        description: 'Override Bioconductor version/container tag (e.g. devel, RELEASE_3_20). Auto-derived if empty.'
@@ -59,6 +58,7 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 +        default: ''
      secrets:
        CODECOV_TOKEN:
++        description: 'Token for uploading coverage to Codecov'
          required: false
 -      DOCKERHUB_USERNAME:
 -        required: false
@@ -165,15 +165,16 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 +      image: bioconductor/bioconductor_docker:${{ needs.set-matrix.outputs.docker_tag }}
 +    env:
 +      R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
-+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN || github.token }}
++      GITHUB_PAT: ${{ github.token }}
 +      _R_CHECK_CRAN_INCOMING_REMOTE_: 'false'
++      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
      steps:
        - name: Checkout Repository
          uses: actions/checkout@v4
          with:
 -          ref: ${{ matrix.checkout_ref }}
 +          ref: ${{ needs.set-matrix.outputs.checkout_ref }}
- 
+
 -      - name: Query dependencies
 -        run: |
 -          options(repos = c(CRAN = Sys.getenv("CRAN")))
@@ -187,8 +188,8 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 +          if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 +          deps <- remotes::dev_package_deps(".", dependencies = TRUE)
 +          saveRDS(deps, ".github/depends.Rds")
-+          writeLines(sprintf("R-%i.%i", R.version$major, floor(as.numeric(R.version$minor))), ".github/R-version")
- 
++          writeLines(sprintf("R-%s.%i", R.version$major, floor(as.numeric(R.version$minor))), ".github/R-version")
+
 -      - name: Cache R packages
 +      - name: Cache R Packages
          uses: actions/cache@v4
@@ -199,7 +200,7 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 -            ${{ runner.os }}-r-${{ matrix.checkout_ref }}-
 +          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
 +          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
- 
+
 -      - name: Install GPG
 -        if: ${{ github.ref == 'refs/heads/devel' && github.event_name != 'pull_request' }}
 -        run: sudo apt-get update && sudo apt-get install -y gpg
@@ -215,12 +216,14 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 +          options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest", BiocManager::repositories()))
 +          remotes::install_local(".", dependencies = TRUE, Ncpus = parallel::detectCores())
 +          BiocManager::install(c("rcmdcheck", "BiocCheck", "covr", "pkgdown"), Ncpus = parallel::detectCores())
- 
+
 -      - name: Check Package
 -        env:
 -          _R_CHECK_CRAN_INCOMING_REMOTE_: false
 -        run: rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "error", check_dir = "check")
 +      - name: Run R CMD check
++        env:
++          RCMDCHECK_ERROR_ON: ${{ inputs.error_on }}
          shell: Rscript {0}
 -
 -      - name: Test coverage
@@ -237,9 +240,12 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 -          )
 -          covr::to_cobertura(cov)
 -        shell: Rscript {0}
-+          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "${{ inputs.error_on }}")
++          allowed <- c("never", "note", "warning", "error")
++          error_on <- Sys.getenv("RCMDCHECK_ERROR_ON", unset = "warning")
++          if (!error_on %in% allowed) stop("Invalid error_on value: '", error_on, "'. Must be one of: ", paste(allowed, collapse = ", "))
++          res <- rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = error_on, check_dir = "check")
 +          print(res)
- 
+
 -      - name: Upload test results to Codecov
 -        if: ${{ success() && github.ref == 'refs/heads/devel' && github.event_name != 'pull_request' && env.CODECOV_TOKEN != '' }}
 -        uses: codecov/codecov-action@v4
@@ -251,104 +257,66 @@ Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdow
 -          token: ${{ secrets.CODECOV_TOKEN }}
 -
        - name: Run BiocCheck
--        id: bioccheck
--        run: |
+         shell: Rscript {0}
+         run: |
 -          BiocCheck::BiocCheck(
 -            dir('check', 'tar.gz$', full.names = TRUE),
 -            `quit-with-status` = TRUE, `no-check-bioc-help` = TRUE
 -          )
++          tarballs <- dir("check", pattern = "\\.tar\\.gz$", full.names = TRUE)
++          if (length(tarballs) == 0) stop("No tarball found in check/ directory")
++          BiocCheck::BiocCheck(tarballs[1], `quit-with-status` = TRUE)
+
+       - name: Test Coverage
+         if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && env.CODECOV_TOKEN != ''
          shell: Rscript {0}
--
--      - name: Build pkgdown
--        if: >-
--          ${{
--            inputs.enable_pkgdown
--            && github.event_name != 'pull_request'
--            && needs.set-matrix.outputs.is_release_branch == 'true'
--          }}
          run: |
--          PATH=$PATH:$HOME/bin/ Rscript -e 'pkgdown::build_site()'
-+          BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)
- 
--      - name: Upload pkgdown artifact
--        if: >-
--          ${{
--            inputs.enable_pkgdown
--            && needs.set-matrix.outputs.is_release_branch == 'true'
--          }}
--        uses: actions/upload-pages-artifact@v3
--        with:
--          path: docs
--
--  dock:
--    needs:
--      - check
--      - set-matrix
--    runs-on: ubuntu-24.04
--    if: >-
--      ${{
--        inputs.enable_docker
--        && github.ref == 'refs/heads/devel'
--        && github.event_name != 'pull_request'
--        && needs.set-matrix.outputs.dockerfile_exists == 'true'
--      }}
--    steps:
--      - name: Checkout Repository
--        uses: actions/checkout@v4
--
--      - name: Register repo name
--        id: reg_repo_name
--        shell: bash
--        run: |
--          echo "CONT_IMG_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
--
--      - name: Login to Docker Hub
--        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
--        uses: docker/login-action@v2
--        with:
--          username: ${{ secrets.DOCKERHUB_USERNAME }}
--          password: ${{ secrets.DOCKERHUB_TOKEN }}
--
--      - name: Build and Push Docker
--        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
--        uses: docker/build-push-action@v6
--        with:
--          context: .
--          file: ./${{ inputs.dockerfile_path }}
--          push: true
--          tags: >
--            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CONT_IMG_NAME }}:latest,
--            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CONT_IMG_NAME }}:devel
--
--  deploy:
--    needs:
--      - check
--      - set-matrix
--    if: >-
--      ${{
--        inputs.enable_pkgdown
--        && github.event_name != 'pull_request'
--        && needs.set-matrix.outputs.is_release_branch == 'true'
--      }}
--    permissions:
--      contents: write
--      pages: write
--      id-token: write
--    runs-on: ubuntu-24.04
--    steps:
--      - name: Deploy to GitHub Pages
--        id: deployment
--        uses: actions/deploy-pages@v4
-+      - name: Test Coverage
-+        if: success() && needs.set-matrix.outputs.is_release_branch == 'false' && secrets.CODECOV_TOKEN != ''
-+        shell: Rscript {0}
-+        run: |
-+          cov <- covr::package_coverage()
-+          covr::codecov(coverage = cov, token = "${{ secrets.CODECOV_TOKEN }}")
- 
-+      - name: Build and Deploy pkgdown Site
-+        if: success() && inputs.enable_pkgdown && needs.set-matrix.outputs.is_release_branch == 'true'
-+        shell: Rscript {0}
-+        run: |
-+          pkgdown::build_site()
+           cov <- covr::package_coverage()
+           covr::codecov(coverage = cov, token = Sys.getenv("CODECOV_TOKEN"))
+
+       - name: Build pkgdown Site
+         if: >-
+           ${{
+             success()
+             && inputs.enable_pkgdown
+             && github.event_name != 'pull_request'
+             && needs.set-matrix.outputs.is_release_branch == 'true'
+           }}
+         shell: Rscript {0}
+         run: |
+           pkgdown::build_site()
+
++      - name: Upload pkgdown artifact
++        if: >-
++          ${{
++            success()
++            && inputs.enable_pkgdown
++            && github.event_name != 'pull_request'
++            && needs.set-matrix.outputs.is_release_branch == 'true'
++          }}
++        uses: actions/upload-pages-artifact@v3
++        with:
++          path: docs
+
+   deploy:
+     needs:
+       - check
+       - set-matrix
+     if: >-
+       ${{
+         inputs.enable_pkgdown
+         && github.event_name != 'pull_request'
+         && needs.set-matrix.outputs.is_release_branch == 'true'
+       }}
+     permissions:
+       pages: write
+       id-token: write
+     environment:
+       name: github-pages
+       url: ${{ steps.deployment.outputs.page_url }}
+     runs-on: ubuntu-latest
+     steps:
+       - name: Deploy to GitHub Pages
+         id: deployment
+         uses: actions/deploy-pages@v4
 ```
