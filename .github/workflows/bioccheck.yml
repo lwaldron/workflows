@@ -3,11 +3,6 @@ name: Bioc Container Check
 on:
   workflow_call:
     inputs:
-      enable_docker:
-        description: 'Enable Docker build/push job'
-        required: false
-        type: boolean
-        default: false
       enable_pkgdown:
         description: 'Enable pkgdown site build and deployment'
         required: false
