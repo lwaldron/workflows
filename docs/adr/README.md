@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory contains Architecture Decision Records (ADRs) for the `lwaldron/workflows` repository. We use the Nygard format for these records.
+This directory contains Architecture Decision Records (ADRs) for the `bioconductor/workflows` repository. We use the Nygard format for these records.
 
 ## Index
 

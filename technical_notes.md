@@ -1,6 +1,6 @@
 # Technical Notes & Software Architecture
 
-This document describes the software architecture and internal maintenance details of the `lwaldron/workflows` repository.
+This document describes the software architecture and internal maintenance details of the `bioconductor/workflows` repository.
 
 ## Architecture Decision Records (ADRs)
 

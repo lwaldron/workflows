@@ -1,9 +1,9 @@
 # Bioconductor GitHub Actions Workflows
 
-[![Actionlint](https://github.com/lwaldron/workflows/actions/workflows/actionlint.yml/badge.svg)](https://github.com/lwaldron/workflows/actions/workflows/actionlint.yml)
-[![Canary Check](https://github.com/lwaldron/workflows/actions/workflows/canary.yml/badge.svg)](https://github.com/lwaldron/workflows/actions/workflows/canary.yml)
+[![Actionlint](https://github.com/bioconductor/workflows/actions/workflows/actionlint.yml/badge.svg)](https://github.com/bioconductor/workflows/actions/workflows/actionlint.yml)
+[![Canary Check](https://github.com/bioconductor/workflows/actions/workflows/canary.yml/badge.svg)](https://github.com/bioconductor/workflows/actions/workflows/canary.yml)
 
-This repository (`lwaldron/workflows`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
+This repository (`bioconductor/workflows`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
 
 ## Overview: Two Complementary Testing Patterns
 
@@ -11,7 +11,7 @@ Two complementary workflows are available depending on your testing goals:
 
 | Purpose | Workflow Reference | Target Environment | Managed By |
 | :--- | :--- | :--- | :--- |
-| **1. Rapid Feedback Check** | `lwaldron/workflows/.github/workflows/bioccheck.yml@v1` | Linux (`bioconductor_docker` container) | Bioconductor Core Team / Maintainers |
+| **1. Rapid Feedback Check** | `bioconductor/workflows/.github/workflows/bioccheck.yml@v1` | Linux (`bioconductor_docker` container) | Bioconductor Core Team / Maintainers |
 | **2. Comprehensive Pre-Release Check** | `r-universe-org/workflows/.github/workflows/build.yml@v3` | Multi-OS (Linux, macOS, Windows, WebAssembly) + `BiocCheck` | R-Universe Team |
 
 ## Documentation

@@ -1,4 +1,4 @@
-# Rapid Feedback Container Check (`lwaldron/bioccheck` workflow)
+# Rapid Feedback Container Check (`bioconductor/bioccheck` workflow)
 
 The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the official `bioconductor/bioconductor_docker` Linux container. Because system libraries and R dependencies are pre-installed in the container, this workflow runs rapidly and is ideal for PRs and continuous commits. It tests *only* on Linux and *only* against one version of Bioconductor that is determined dynamically from the name of the branch that is being tested directly or by Pull Request. This is sufficient for most development and many Bioconductor package maintainers.
 
@@ -16,7 +16,7 @@ The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the o
 
 To just run `R CMD check` and `BiocCheck` on commits and PRs, you can copy the [ci.yml](ci.yml) template into `.github/workflows/ci.yml` and no additional configuration is needed. 
 
-To add additional features like `COVR` and `pkgdown`, or change error sensitivity (`error/warning/note/never`), you can edit the above file, or use our interactive [Workflow Generator](https://lwaldron.github.io/workflows/).
+To add additional features like `COVR` and `pkgdown`, or change error sensitivity (`error/warning/note/never`), you can edit the above file, or use our interactive [Workflow Generator](https://bioconductor.github.io/workflows/).
 
 ### Repository Configuration for Optional Features
 

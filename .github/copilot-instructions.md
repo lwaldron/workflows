@@ -1,4 +1,4 @@
-# Copilot Instructions for lwaldron/workflows
+# Copilot Instructions for bioconductor/workflows
 
 You are an expert in GitHub Actions and R/Bioconductor continuous integration. When assisting with this repository, adhere to the following rules:
 

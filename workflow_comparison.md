@@ -1,12 +1,12 @@
 # Comparison & Diff: `bioccheck.yml` vs `waldronlab/bioc-pr-cmdcheck-pkgdown.yml`
 
-This document outlines the design decisions and technical differences between the new **`lwaldron/workflows/.github/workflows/bioccheck.yml`** workflow and the upstream **`waldronlab/.github/.github/workflows/bioc-pr-cmdcheck-pkgdown.yml`** workflow.
+This document outlines the design decisions and technical differences between the new **`bioconductor/workflows/.github/workflows/bioccheck.yml`** workflow and the upstream **`waldronlab/.github/.github/workflows/bioc-pr-cmdcheck-pkgdown.yml`** workflow.
 
 ---
 
 ## 1. Summary of Key Differences
 
-| Feature / Aspect | `waldronlab` Source Workflow | `lwaldron` (`bioccheck.yml`) | Key Advantage / Reason |
+| Feature / Aspect | `waldronlab` Source Workflow | `bioconductor` (`bioccheck.yml`) | Key Advantage / Reason |
 | :--- | :--- | :--- | :--- |
 | **Container Tag (`DOCKER_TAG`)** | Hardcoded to `"devel"` unconditionally | **Dynamic tag resolution**: maps `RELEASE_X_Y` branch targets to `bioconductor_docker:RELEASE_X_Y` | Ensures PRs/pushes targeting Bioconductor release branches test against the matching release container rather than `devel`. |
 | **Branch Override** | None | Optional `bioc_version` input parameter | Allows callers to manually override the container tag (e.g. `bioc_version: "RELEASE_3_20"`). |
@@ -19,11 +19,11 @@ This document outlines the design decisions and technical differences between th
 
 ## 2. Full Unified Diff
 
-Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` (left/minus) with `lwaldron/workflows/.github/workflows/bioccheck.yml` (right/plus):
+Below is the complete unified diff comparing `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` (left/minus) with `bioconductor/workflows/.github/workflows/bioccheck.yml` (right/plus):
 
 ```diff
 --- waldronlab/bioc-pr-cmdcheck-pkgdown.yml
-+++ lwaldron/workflows/.github/workflows/bioccheck.yml
++++ bioconductor/workflows/.github/workflows/bioccheck.yml
 @@ -1,4 +1,4 @@
 -name: Bioc PR CMD check & (optional) pkgdown + Docker
 +name: Bioc Container Check
