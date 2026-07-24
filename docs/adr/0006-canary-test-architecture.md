@@ -14,21 +14,21 @@ How do we structure the canary so it continuously validates the deployed workflo
 
 ## Decision
 
-We will make the `lwaldron/workflows` repository itself a minimal, valid R package by adding a `DESCRIPTION` file to its root. The canary workflow (`.github/workflows/canary.yml`) then calls `bioccheck.yml@main` — targeting the published `main` branch — with `error_on: "never"` to suppress expected BiocCheck notes on the stub package.
+We will make the `lwaldron/workflows` repository itself a minimal, valid R package by adding a `DESCRIPTION` file to its root. The canary workflow (`.github/workflows/canary.yml`) then calls the local reusable workflow using relative path syntax `uses: ./.github/workflows/bioccheck.yml` with `error_on: "never"` so the `rcmdcheck` step does not fail on expected findings from the stub package.
 
 Key specifics of the decision:
-- **`@main` reference**: The canary calls `uses: lwaldron/workflows/.github/workflows/bioccheck.yml@main` rather than the local `uses: ./.github/workflows/bioccheck.yml`. This ensures the scheduled run validates the *deployed* version of the workflow, not an unmerged branch.
-- **`error_on: "never"`**: The stub `DESCRIPTION` intentionally has no vignettes, NEWS file, or ORCID. `BiocCheck` would emit notes for all of these. Setting `error_on: "never"` means the canary logs these expected notes without failing, isolating true environmental failures (broken containers, missing packages) from expected stub-related noise.
+- **Relative Path Reference**: GitHub Actions strictly requires same-repository reusable workflows to be called using relative path syntax (`uses: ./.github/workflows/bioccheck.yml`). Using fully-qualified names (e.g. `owner/repo/path@ref`) for same-repository calls causes runtime "invalid workflow file" errors in GitHub Actions.
+- **`error_on: "never"`**: This input only affects the `rcmdcheck` step. It keeps expected `rcmdcheck` findings from the stub package from failing the canary, while `BiocCheck` still runs normally and surfaces its expected notes in the logs.
 
 ## Alternatives Considered
 
 - **Separate canary repository**: A separate `lwaldron/workflows-canary` repository containing a real R package, with the cron scheduled there. This was rejected because it fragments maintenance across two repositories and adds overhead for every future change to the workflow (you would need to update or re-run the canary repo separately).
 - **`working-directory` input on `bioccheck.yml`**: Add a new `working-directory` input to `bioccheck.yml` and place a dummy package in a `tests/` subdirectory of this repo. This was rejected because it would complicate the core reusable workflow for all downstream users solely to accommodate the canary use case.
-- **Fail on `"warning"` in the canary**: Using the default `error_on: "warning"` in the canary would cause it to immediately fail due to BiocCheck warnings about the stub package (missing vignettes, etc.), making it impossible to distinguish real failures from expected ones.
+- **Fail on `"warning"` in the canary**: Using the default `error_on: "warning"` would make the synthetic stub package more likely to fail the `rcmdcheck` step on non-actionable findings, adding noise to a workflow whose main purpose is to detect environmental regressions.
 
 ## Consequences
 
 - **Self-contained**: The entire canary lives in this repository. No external dependencies or separate repositories to maintain.
-- **Accurate failure signal**: By using `error_on: "never"`, a canary failure unambiguously indicates a real environmental problem (e.g., a broken Bioconductor container), not a false positive from the stub package structure.
+- **Lower-noise failure signal**: By using `error_on: "never"`, the canary is less likely to fail on expected `rcmdcheck` findings from the stub package, making environmental regressions easier to spot.
 - **`lwaldron/workflows` is now an R package**: Future maintainers should be aware that the `DESCRIPTION` file is a deliberate sentinel artifact, not the beginning of a real package. This should be documented clearly in the `DESCRIPTION` itself and the README.
 - **`@main` creates a one-commit lag**: Changes to `bioccheck.yml` are only tested by the canary after they land on `main`. PRs are validated by Actionlint (static) but not by a live canary run; this is an acceptable trade-off.
