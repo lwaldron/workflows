@@ -14,8 +14,7 @@ Is it acceptable to run `BiocCheck` on the raw source directory instead of the `
 
 ## Decision
 
-We will **reject** the simplification of running `BiocCheck(".")` on the raw source. We will continue to run `BiocCheck` on the built `.tar.gz` tarball artifact, mirroring `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` and the Bioconductor
-Build System.
+We will **reject** the simplification of running `BiocCheck(".")` on the raw source. We will continue to run `BiocCheck` on the built `.tar.gz` tarball artifact, mirroring `waldronlab/bioc-pr-cmdcheck-pkgdown.yml` and the Bioconductor Build System.
 
 In the GitHub Actions workflow, this is implemented by forcing `rcmdcheck` to output its build artifacts to a known directory (`check_dir = "check"`), and then explicitly targeting the tarball:
 ```R
