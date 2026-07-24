@@ -20,3 +20,5 @@ This repository uses `raven-actions/actionlint` to validate the GitHub Actions w
 ### [`canary.yml`](.github/workflows/canary.yml)
 The canary workflow runs on a weekly schedule (and on-demand) to verify that `bioccheck.yml` executes correctly end-to-end against the Bioconductor container tag derived from the main branch. 
 It uses `error_on: 'never'` so that expected BiocCheck notes from the internal stub package do not cause a false failure.
+
+This repo contains a [DESCRIPTION](DESCRIPTION) file and [basic vignette](vignettes/canary.Rmd) to make it a valid R package that can be checked without error (with enough disabling flags invoked).
