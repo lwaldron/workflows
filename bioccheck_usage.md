@@ -40,9 +40,9 @@ on:
 jobs:
   bioccheck:
     # Required only if you set enable_pkgdown: true
-    permissions:
-      pages: write
-      id-token: write
+    # permissions:
+    #   pages: write
+    #   id-token: write
     uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
     with:
       error_on: 'warning'
