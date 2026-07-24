@@ -160,15 +160,18 @@ jobs:
         shell: Rscript {0}
         run: |
           pkg_name <- read.dcf("DESCRIPTION", fields = "Package")[1L, "Package"]
-          tryCatch({
-            result <- cyclocomp::cyclocomp_package(pkg_name)
-            if (!is.null(result) && nrow(result) > 0L) {
-              write.csv(result, "cyclocomp_results.csv", row.names = FALSE)
-              message("cyclocomp: ", nrow(result), " functions analyzed")
+          result <- tryCatch(
+            cyclocomp::cyclocomp_package(pkg_name),
+            error = function(e) {
+              message("cyclocomp failed: ", conditionMessage(e))
+              NULL
             }
-          }, error = function(e) {
-            message("cyclocomp failed: ", conditionMessage(e))
-          })
+          )
+          if (is.null(result)) {
+            result <- data.frame(name = character(), cyclocomp = integer())
+          }
+          write.csv(result, "cyclocomp_results.csv", row.names = FALSE)
+          message("cyclocomp: ", nrow(result), " functions analyzed")
 
       - name: Upload Cyclocomp Results
         if: always() && inputs.enable_cyclocomp == true
