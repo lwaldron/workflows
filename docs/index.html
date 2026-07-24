@@ -334,17 +334,11 @@
                     workflowObj.jobs.bioccheck.with.enable_pkgdown = true;
                 }
 
-                // Add error_on parameter
+                // Add error_on parameter only if non-default
                 if (errorOn !== 'warning') {
                     workflowObj.jobs.bioccheck.with.error_on = errorOn;
-                } else if (hasPkgdown) {
-                    // Only output error_on: warning if we have other 'with' inputs to make it look clean,
-                    // or we can just omit it since it's the default, but explicitly showing it is often nice.
-                    workflowObj.jobs.bioccheck.with.error_on = 'warning';
-                } else {
-                    workflowObj.jobs.bioccheck.with.error_on = 'warning';
                 }
-                
+
                 // If 'with' is empty, remove it to keep yaml clean
                 if (Object.keys(workflowObj.jobs.bioccheck.with).length === 0) {
                     delete workflowObj.jobs.bioccheck.with;
