@@ -6,7 +6,7 @@
 This repository (`bioconductor/workflows`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
 
 
-**NOTE**: This is pre-release. Please use and file issues, but it may not work yet. The first stable release will be tagged `v1`.
+**NOTE**: This is pre-release. Please try it and file issues, but some things may not work yet. The first stable release will be tagged `v1`.
 
 ## Overview: Two Complementary Testing Patterns
 
