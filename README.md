@@ -83,7 +83,6 @@ For additional configuration options and inputs, refer to the upstream [r-univer
 | Input / Secret | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `enable_pkgdown` | `boolean` | `false` | Enable building and deploying `pkgdown` site on release branch pushes. |
-| `enable_docker` | `boolean` | `false` | Enable Docker image build and push. |
 | `error_on` | `string` | `"warning"` | Error policy for `rcmdcheck` (`"never"`, `"note"`, `"warning"`, `"error"`). |
 | `bioc_version` | `string` | `""` | Optional override for container tag (e.g. `devel`, `RELEASE_3_20`). |
 | `secrets.CODECOV_TOKEN` | secret | `""` | Optional Codecov token for coverage uploads. |
