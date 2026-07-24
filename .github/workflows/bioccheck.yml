@@ -105,7 +105,7 @@ jobs:
           writeLines(sprintf("R-%s.%i", R.version$major, floor(as.numeric(R.version$minor))), ".github/R-version")
 
       - name: Cache R Packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /usr/local/lib/R/site-library
           key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
