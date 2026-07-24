@@ -8,7 +8,7 @@ The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the o
   * Pull requests or pushes to `devel`, `main`, `master`, or feature branches automatically use `bioconductor/bioconductor_docker:devel`.
 * **R Dependency Caching**: Caches R package dependencies in `/usr/local/lib/R/site-library` keyed on `depends.Rds` and R version.
 * **Integrated Checks**: Executes `R CMD check` (configurable error threshold via `error_on`) and `BiocCheck` (with `quit-with-status = TRUE`).
-* **Optional Features**: Test coverage reporting via Codecov and `pkgdown` site build/deployment.
+* **Optional Features**: Test coverage reporting via Codecov, cyclomatic complexity analysis via `cyclocomp`, and `pkgdown` site build/deployment.
 
 ## Usage
 
@@ -29,11 +29,26 @@ Even if you use the Workflow Generator, you must perform these one-time reposito
 **For `pkgdown`:**
 1. **Configure GitHub Pages Source**: In your package repository on GitHub, navigate to **Settings** &rarr; **Pages**. Under **Build and deployment** &rarr; **Source**, select **GitHub Actions** (do NOT select "Deploy from a branch").
 
+### Using the Cyclocomp Artifact
+
+When `enable_cyclocomp` is true, the workflow uploads a `cyclocomp-results` CSV artifact.
+- **How to download:** Navigate to the workflow run in the GitHub Actions UI &rarr; **Artifacts** section at the bottom &rarr; download `cyclocomp-results`.
+- **What the CSV contains:** Two columns &mdash; `name` (function name) and `cyclocomp` (integer cyclomatic complexity score).
+- **How to interpret scores:** Standard thresholds &mdash; scores of **1-10** are considered simple and low-risk; **11-20** indicate moderate complexity that warrants attention; **21+** indicates high complexity that should be a refactoring priority.
+- **What to do with high scores:** Functions with scores > 10 are candidates for decomposition into smaller, single-purpose helpers. This is a code quality metric, not a pass/fail check &mdash; the workflow will not fail regardless of scores.
+- **R snippet to inspect locally:**
+  ```r
+  library(cyclocomp)
+  result <- cyclocomp_package("MyPackage")
+  result[order(-result$cyclocomp), ]  # sort by complexity descending
+  ```
+
 ## Workflow Inputs & Parameters
 
 | Input / Secret | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `enable_pkgdown` | `boolean` | `false` | Enable building and deploying `pkgdown` site on release branch pushes. |
+| `enable_cyclocomp` | `boolean` | `false` | Enable cyclomatic complexity analysis via cyclocomp. |
 | `error_on` | `string` | `"warning"` | Error policy for `rcmdcheck` (`"never"`, `"note"`, `"warning"`, `"error"`). |
 | `bioc_version` | `string` | `""` | Optional override for container tag (e.g. `devel`, `RELEASE_3_20`). |
 | `secrets.CODECOV_TOKEN` | secret | `""` | Optional Codecov token for coverage uploads. |

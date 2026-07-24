@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: false
+      enable_cyclocomp:
+        description: 'Enable cyclomatic complexity analysis via cyclocomp'
+        required: false
+        type: boolean
+        default: false
       error_on:
         description: 'Error policy for rcmdcheck (never, note, warning, error)'
         required: false
@@ -119,7 +124,7 @@ jobs:
         run: |
           options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest", BiocManager::repositories()))
           remotes::install_local(".", dependencies = TRUE, Ncpus = parallel::detectCores())
-          BiocManager::install(c("rcmdcheck", "BiocCheck", "covr", "pkgdown"), Ncpus = parallel::detectCores())
+          BiocManager::install(c("rcmdcheck", "BiocCheck", "covr", "pkgdown", "cyclocomp"), Ncpus = parallel::detectCores())
 
       - name: Run R CMD check
         env:
@@ -148,6 +153,33 @@ jobs:
         run: |
           cov <- covr::package_coverage()
           covr::codecov(coverage = cov, token = Sys.getenv("CODECOV_TOKEN"))
+
+      - name: Run Cyclocomp
+        if: inputs.enable_cyclocomp == true
+        continue-on-error: true
+        shell: Rscript {0}
+        run: |
+          pkg_name <- read.dcf("DESCRIPTION", fields = "Package")[1L, "Package"]
+          result <- tryCatch(
+            cyclocomp::cyclocomp_package(pkg_name),
+            error = function(e) {
+              message("cyclocomp failed: ", conditionMessage(e))
+              NULL
+            }
+          )
+          if (is.null(result)) {
+            result <- data.frame(name = character(), cyclocomp = integer())
+          }
+          write.csv(result, "cyclocomp_results.csv", row.names = FALSE)
+          message("cyclocomp: ", nrow(result), " functions analyzed")
+
+      - name: Upload Cyclocomp Results
+        if: always() && inputs.enable_cyclocomp == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyclocomp-results
+          path: cyclocomp_results.csv
+          if-no-files-found: warn
 
       - name: Build pkgdown Site
         if: >-
