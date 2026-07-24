@@ -28,6 +28,7 @@ Even if you use the Workflow Generator, you must perform these one-time reposito
 
 **For `pkgdown`:**
 1. **Configure GitHub Pages Source**: In your package repository on GitHub, navigate to **Settings** &rarr; **Pages**. Under **Build and deployment** &rarr; **Source**, select **GitHub Actions** (do NOT select "Deploy from a branch").
+2. **Allow Deployment Branches**: Navigate to **Settings** &rarr; **Environments** &rarr; **github-pages**. Under **Deployment branches**, change the rule to **All branches** (or add `RELEASE_*` to the allowed branch pattern) so that GitHub allows deployments from Bioconductor release branches.
 
 ### Using the Cyclocomp Artifact
 
