@@ -13,6 +13,6 @@ on:
 
 jobs:
   canary:
-    uses: ./.github/workflows/bioccheck.yml
+    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@main
     with:
       error_on: 'never'
