@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bioconductor Workflow Generator</title>
+    <!-- Use Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load js-yaml for robust YAML generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a; /* Slate 900 */
+            --bg-glass: rgba(30, 41, 59, 0.7); /* Slate 800 with opacity */
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc; /* Slate 50 */
+            --text-muted: #94a3b8; /* Slate 400 */
+            --accent-primary: #3b82f6; /* Blue 500 */
+            --accent-hover: #2563eb; /* Blue 600 */
+            --success-color: #10b981; /* Emerald 500 */
+            --panel-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        header {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--panel-shadow);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-main);
+            transition: color 0.2s ease;
+        }
+
+        .form-group label:hover {
+            color: #fff;
+        }
+
+        .form-group input[type="checkbox"] {
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+        }
+        
+        .label-text-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: 1rem;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--accent-primary);
+        }
+        
+        .select-wrapper {
+            position: relative;
+        }
+        
+        .select-wrapper::after {
+            content: "▼";
+            font-size: 0.8rem;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Output Panel specific */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .output-header h2 {
+            margin-bottom: 0;
+        }
+
+        .copy-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .copy-btn.success {
+            background: var(--success-color);
+        }
+
+        pre {
+            background: #0f172a !important;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+            flex-grow: 1;
+            border: 1px solid var(--border-glass);
+            margin: 0;
+        }
+
+        code {
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Workflow Generator</h1>
+        <p class="subtitle">Interactive builder for the lwaldron/workflows bioccheck GitHub Action.</p>
+    </header>
+
+    <div class="container">
+        <!-- Configuration Panel -->
+        <div class="panel config-panel">
+            <h2>Configuration</h2>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="opt-pkgdown">
+                    <div class="label-text-wrapper">
+                        <span>Enable pkgdown Site</span>
+                        <span class="help-text">Builds and deploys a pkgdown site to GitHub Pages on release branch pushes. Requires Actions read/write permissions.</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="opt-codecov">
+                    <div class="label-text-wrapper">
+                        <span>Enable Codecov</span>
+                        <span class="help-text">Uploads test coverage to Codecov using covr. Requires a CODECOV_TOKEN secret in your repository.</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 32px;">
+                <div class="label-text-wrapper" style="margin-bottom: 8px;">
+                    <span style="font-weight: 500;">Error Policy (R CMD check)</span>
+                    <span class="help-text">Determines which R CMD check results will cause the workflow to fail.</span>
+                </div>
+                <div class="select-wrapper">
+                    <select id="opt-error-on">
+                        <option value="warning" selected>warning (Fail on warnings and errors)</option>
+                        <option value="error">error (Fail only on errors)</option>
+                        <option value="note">note (Fail on notes, warnings, and errors)</option>
+                        <option value="never">never (Never fail based on R CMD check output)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="panel output-panel">
+            <div class="output-header">
+                <h2>Generated YAML</h2>
+                <button id="copy-btn" class="copy-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy
+                </button>
+            </div>
+            <pre><code id="yaml-output"></code></pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const elPkgdown = document.getElementById('opt-pkgdown');
+            const elCodecov = document.getElementById('opt-codecov');
+            const elErrorOn = document.getElementById('opt-error-on');
+            const elOutput = document.getElementById('yaml-output');
+            const btnCopy = document.getElementById('copy-btn');
+
+            // Listeners
+            [elPkgdown, elCodecov, elErrorOn].forEach(el => {
+                el.addEventListener('change', generateYaml);
+            });
+
+            function generateYaml() {
+                const hasPkgdown = elPkgdown.checked;
+                const hasCodecov = elCodecov.checked;
+                const errorOn = elErrorOn.value;
+
+                // Build the JavaScript Object Model
+                const workflowObj = {
+                    name: 'CI',
+                    on: {
+                        push: { branches: ['devel', 'main', 'master', 'RELEASE_*'] },
+                        pull_request: { branches: ['devel', 'main', 'master', 'RELEASE_*'] }
+                    },
+                    jobs: {
+                        bioccheck: {
+                            uses: 'lwaldron/workflows/.github/workflows/bioccheck.yml@v1',
+                            with: {}
+                        }
+                    }
+                };
+
+                // Add permissions block if pkgdown is enabled
+                if (hasPkgdown) {
+                    workflowObj.jobs.bioccheck.permissions = {
+                        pages: 'write',
+                        'id-token': 'write'
+                    };
+                    workflowObj.jobs.bioccheck.with.enable_pkgdown = true;
+                }
+
+                // Add error_on parameter
+                if (errorOn !== 'warning') {
+                    workflowObj.jobs.bioccheck.with.error_on = errorOn;
+                } else if (hasPkgdown) {
+                    // Only output error_on: warning if we have other 'with' inputs to make it look clean,
+                    // or we can just omit it since it's the default, but explicitly showing it is often nice.
+                    workflowObj.jobs.bioccheck.with.error_on = 'warning';
+                } else {
+                    workflowObj.jobs.bioccheck.with.error_on = 'warning';
+                }
+                
+                // If 'with' is empty, remove it to keep yaml clean
+                if (Object.keys(workflowObj.jobs.bioccheck.with).length === 0) {
+                    delete workflowObj.jobs.bioccheck.with;
+                }
+
+                // Add secrets block if codecov is enabled
+                if (hasCodecov) {
+                    // js-yaml handles standard objects well, but for dynamic GHA expressions like ${{ ... }}
+                    // we can just pass it as a string and js-yaml will quote it if needed, or we can use custom type.
+                    // Actually, js-yaml might quote strings with ${{ }}. To avoid quotes, we can post-process or let it quote.
+                    // GHA actually supports quoted strings for expressions, e.g. CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+                    // But standard unquoted is cleaner. Let's let js-yaml dump it, and we will clean up quotes on expressions if present.
+                    workflowObj.jobs.bioccheck.secrets = {
+                        CODECOV_TOKEN: '${{ secrets.CODECOV_TOKEN }}'
+                    };
+                }
+
+                // Serialize object to YAML
+                let yamlString = jsyaml.dump(workflowObj, {
+                    lineWidth: -1,
+                    noRefs: true,
+                    quotingType: '"'
+                });
+                
+                // Cleanup js-yaml quirks to match idiomatic GitHub Actions style:
+                // 1. Remove quotes around GHA expressions (e.g. "${{ ... }}")
+                yamlString = yamlString.replace(/['"](\$\{\{.*?\}\})['"]/g, '$1');
+                
+                // 2. Add an empty line before 'jobs:' for readability
+                yamlString = yamlString.replace(/^jobs:/m, '\njobs:');
+                
+                // 3. Make sure 'on' is unquoted if js-yaml quoted it (some parsers quote 'on')
+                yamlString = yamlString.replace(/^['"]on['"]:/m, 'on:');
+
+                elOutput.textContent = yamlString;
+            }
+
+            // Copy to clipboard
+            btnCopy.addEventListener('click', () => {
+                const textToCopy = elOutput.textContent;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalHTML = btnCopy.innerHTML;
+                    btnCopy.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    btnCopy.classList.add('success');
+                    
+                    setTimeout(() => {
+                        btnCopy.innerHTML = originalHTML;
+                        btnCopy.classList.remove('success');
+                    }, 2000);
+                });
+            });
+
+            // Initial generation
+            generateYaml();
+        });
+    </script>
+</body>
+</html>
