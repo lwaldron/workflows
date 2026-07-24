@@ -71,9 +71,11 @@ jobs:
             CHECKOUT_REF="${GITHUB_SHA}"
           fi
 
-          echo "docker_tag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
-          echo "is_release_branch=${IS_RELEASE}" >> $GITHUB_OUTPUT
-          echo "checkout_ref=${CHECKOUT_REF}" >> $GITHUB_OUTPUT
+          {
+            echo "docker_tag=${DOCKER_TAG}"
+            echo "is_release_branch=${IS_RELEASE}"
+            echo "checkout_ref=${CHECKOUT_REF}"
+          } >> "$GITHUB_OUTPUT"
           echo "Resolved DOCKER_TAG=${DOCKER_TAG}, IS_RELEASE=${IS_RELEASE}, CHECKOUT_REF=${CHECKOUT_REF}"
 
   check:

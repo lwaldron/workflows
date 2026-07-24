@@ -9,3 +9,4 @@ This directory contains Architecture Decision Records (ADRs) for the `lwaldron/w
 - [0003. Configurable `rcmdcheck` Severity (`error_on`)](0003-configurable-rcmdcheck-severity.md)
 - [0004. In-place Package Installation for Dependencies](0004-in-place-package-installation.md)
 - [0005. Opt-in Architecture for Non-Core Features (pkgdown, Codecov)](0005-opt-in-architecture-for-non-core-features.md)
+- [0006. Self-Contained Canary Test Architecture](0006-canary-test-architecture.md)

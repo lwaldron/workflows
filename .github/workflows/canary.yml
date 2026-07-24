@@ -1,0 +1,18 @@
+name: Canary Check
+
+# Runs on a weekly schedule and on-demand to verify that bioccheck.yml
+# executes correctly end-to-end against the Bioconductor container tag derived from the branch (main => devel).
+# Uses error_on: "never" so expected BiocCheck notes from this stub package
+# (no vignettes, no NEWS, etc.) do not cause a false failure.
+
+on:
+  schedule:
+    # Every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  canary:
+    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@main
+    with:
+      error_on: 'never'
