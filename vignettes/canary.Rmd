@@ -1,0 +1,10 @@
+---
+title: "Canary Vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Canary Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Canary vignette stub for validating BiocCheck.

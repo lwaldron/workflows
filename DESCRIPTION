@@ -11,3 +11,7 @@ Description: A minimal R package used as a canary to validate that the
 License: MIT + file LICENSE
 Encoding: UTF-8
 biocViews: Infrastructure
+VignetteBuilder: knitr
+Suggests:
+    knitr,
+    rmarkdown
