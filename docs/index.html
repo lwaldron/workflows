@@ -383,18 +383,26 @@
             }
 
             // Copy to clipboard
-            btnCopy.addEventListener('click', () => {
+            btnCopy.addEventListener('click', async () => {
                 const textToCopy = elOutput.textContent;
-                navigator.clipboard.writeText(textToCopy).then(() => {
+
+                try {
+                    if (!navigator.clipboard?.writeText) {
+                        throw new Error('Clipboard API unavailable');
+                    }
+
+                    await navigator.clipboard.writeText(textToCopy);
                     const originalHTML = btnCopy.innerHTML;
                     btnCopy.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
                     btnCopy.classList.add('success');
-                    
+
                     setTimeout(() => {
                         btnCopy.innerHTML = originalHTML;
                         btnCopy.classList.remove('success');
                     }, 2000);
-                });
+                } catch (err) {
+                    console.error('Failed to copy YAML to clipboard', err);
+                }
             });
 
             // Initial generation
