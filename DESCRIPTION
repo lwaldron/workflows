@@ -5,7 +5,7 @@ Authors@R:
     person("Levi", "Waldron", email = "lwaldron@bioconductor.org", role = c("aut", "cre"))
 Description: A minimal R package used as a canary to validate that the
     lwaldron/workflows reusable GitHub Actions workflows execute correctly
-    end-to-end against the current Bioconductor release and devel containers.
+    end-to-end against the current Bioconductor devel container.
     This package has no real functionality; its sole purpose is to serve as
     the check target for the scheduled canary CI workflow.
 License: MIT + file LICENSE
