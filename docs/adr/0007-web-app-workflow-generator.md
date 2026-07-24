@@ -25,6 +25,7 @@ Instead of concatenating string snippets (which is error-prone and brittle), the
 A known risk of external generators is that they become stale when the underlying workflow inputs change. To mitigate this "synchronization drift":
 1. The generator is housed in this repository alongside the workflows it generates, not in an external repository.
 2. We have established a strict rule in `.github/copilot-instructions.md` mandating that any changes to `bioccheck.yml` inputs, secrets, or permissions must be mirrored in the JavaScript logic of `docs/index.html` and the markdown reference tables.
+3. **Repository Setup Handling**: To prevent UI clutter and confusion, the web app generator handles workflow-level syntax (like `permissions:` and `secrets:`) automatically, but does NOT attempt to provide repository-level setup instructions (like how to configure GitHub Pages). Instead, any feature requiring manual repository configuration must link directly to the relevant setup section in `bioccheck_usage.md` from its UI label.
 
 ## Consequences
 
