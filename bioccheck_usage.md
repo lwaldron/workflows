@@ -1,6 +1,6 @@
-# Rapid Feedback Container Check (`bioccheck.yml`)
+# Rapid Feedback Container Check (`lwaldron/bioccheck` workflow)
 
-The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the official `bioconductor/bioconductor_docker` container. Because system libraries and R dependencies are pre-installed in the container, this workflow runs rapidly and is ideal for PRs and continuous commits. It tests *only* on Linux and *only* against one version of Bioconductor that is determined dynamically based on the name of the branch that is being tested directly or by Pull Request. This is sufficient for most development purposes.
+The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the official `bioconductor/bioconductor_docker` Linux container. Because system libraries and R dependencies are pre-installed in the container, this workflow runs rapidly and is ideal for PRs and continuous commits. It tests *only* on Linux and *only* against one version of Bioconductor that is determined dynamically from the name of the branch that is being tested directly or by Pull Request. This is sufficient for most development and many Bioconductor package maintainers.
 
 ## Key Features
 * **Dynamic Container Matching**:
@@ -12,9 +12,13 @@ The **Container Check** workflow runs `R CMD check` and `BiocCheck` inside the o
 
 ## Usage
 
-We recommend using our interactive [Workflow Generator](https://lwaldron.github.io/workflows/) to build your `.github/workflows/bioccheck.yml` file. It allows you to easily toggle optional features like Codecov and `pkgdown` and outputs perfectly formatted YAML.
+### Basic Workflow
 
-### Repository Setup for Optional Features
+To just run `R CMD check` and `BiocCheck` on commits and PRs, you can copy the [ci.yml](ci.yml) template into `.github/workflows/ci.yml` and no additional configuration is needed. 
+
+To add additional features like `COVR` and `pkgdown`, or change error sensitivity (`error/warning/note/never`), you can edit the above file, or use our interactive [Workflow Generator](https://lwaldron.github.io/workflows/).
+
+### Repository Configuration for Optional Features
 
 Even if you use the Workflow Generator, you must perform these one-time repository settings to use optional features:
 
@@ -25,34 +29,7 @@ Even if you use the Workflow Generator, you must perform these one-time reposito
 **For `pkgdown`:**
 1. **Configure GitHub Pages Source**: In your package repository on GitHub, navigate to **Settings** &rarr; **Pages**. Under **Build and deployment** &rarr; **Source**, select **GitHub Actions** (do NOT select "Deploy from a branch").
 
-### Manual Configuration (Fallback)
-If you prefer to configure the workflow manually, you can copy the following template and adjust the `with:` inputs, `secrets:`, and `permissions:` blocks according to your needs:
-
-```yaml
-name: CI
-
-on:
-  push:
-    branches: [ devel, main, master, RELEASE_* ]
-  pull_request:
-    branches: [ devel, main, master, RELEASE_* ]
-
-jobs:
-  bioccheck:
-    # Required only if you set enable_pkgdown: true
-    # permissions:
-    #   pages: write
-    #   id-token: write
-    uses: lwaldron/workflows/.github/workflows/bioccheck.yml@v1
-    with:
-      error_on: 'warning'
-      enable_pkgdown: false
-    # Required only if you want test coverage via Codecov
-    # secrets:
-    #   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-```
-
-## Workflow Inputs & Parameters for `bioccheck.yml`
+## Workflow Inputs & Parameters
 
 | Input / Secret | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
