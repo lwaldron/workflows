@@ -130,8 +130,10 @@ jobs:
       - name: Run BiocCheck
         shell: Rscript {0}
         run: |
+          tarballs <- dir("check", pattern = "\\.tar\\.gz$", full.names = TRUE)
+          if (length(tarballs) != 1) stop("Expected exactly one package tarball in check/, found ", length(tarballs))
           BiocCheck::BiocCheck(
-            dir('check', 'tar.gz$', full.names = TRUE),
+            tarballs,
             `quit-with-status` = TRUE, `no-check-bioc-help` = TRUE
           )
 
