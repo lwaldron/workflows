@@ -72,7 +72,7 @@ jobs:
           fi
 
           {
-            echo "docker_tag=${DOCKER_TAG}"
+            echo "docker_tag=[\"${DOCKER_TAG}\"]"
             echo "is_release_branch=${IS_RELEASE}"
             echo "checkout_ref=${CHECKOUT_REF}"
           } >> "$GITHUB_OUTPUT"
@@ -81,8 +81,11 @@ jobs:
   check:
     needs: set-matrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        docker_tag: ${{ fromJson(needs.set-matrix.outputs.docker_tag) }}
     container:
-      image: bioconductor/bioconductor_docker:${{ needs.set-matrix.outputs.docker_tag }}
+      image: bioconductor/bioconductor_docker:${{ matrix.docker_tag }}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: 'true'
       GITHUB_PAT: ${{ github.token }}
