@@ -57,8 +57,8 @@ When `enable_cyclocomp` is true, the workflow uploads a `cyclocomp-results` CSV 
 
 When calling reusable GitHub Actions workflows, the portion after `@` can be any git reference (a tag, branch, or SHA):
 
-- **`@v1` (Recommended for callers)**: Pointing callers to `@v1` relies on a floating major version tag or branch (e.g. `v1`). Maintainers update `v1` whenever backwards-compatible fixes or updates are published, protecting consuming repos from unexpected breaking changes in future major revisions (`v2`).
-- **`@main`**: Points to the bleeding-edge default branch. Useful for development or internal repos that always want the latest changes immediately.
+- **`@main` (Default)**: Points to the default branch (`main`). Recommended during initial development prior to formal major releases.
+- **`@v1`**: Pointing callers to `@v1` relies on a floating major version tag or branch (e.g. `v1`) once major releases begin. Maintainers update `v1` whenever backwards-compatible fixes or updates are published, protecting consuming repos from unexpected breaking changes in future major revisions (`v2`).
 - **`@v1.0.0`**: Pins to an exact release tag for strict reproducibility.
 
 ### How to Maintain Version Tags / Branches
