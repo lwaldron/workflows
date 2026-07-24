@@ -1,5 +1,8 @@
 # Bioconductor GitHub Actions Workflows
 
+[![Actionlint](https://github.com/lwaldron/workflows/actions/workflows/actionlint.yml/badge.svg)](https://github.com/lwaldron/workflows/actions/workflows/actionlint.yml)
+[![Canary Check](https://github.com/lwaldron/workflows/actions/workflows/canary.yml/badge.svg)](https://github.com/lwaldron/workflows/actions/workflows/canary.yml)
+
 This repository (`lwaldron/workflows`) hosts reusable GitHub Actions workflows for R/Bioconductor package development.
 
 ---
