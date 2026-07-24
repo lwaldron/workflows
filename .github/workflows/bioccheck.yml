@@ -215,6 +215,7 @@ jobs:
         && github.event_name != 'pull_request'
         && needs.set-matrix.outputs.is_release_branch == 'true'
       }}
+    # NOTE: The caller workflow must grant `pages: write` and `id-token: write` permissions when `enable_pkgdown` is enabled.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
