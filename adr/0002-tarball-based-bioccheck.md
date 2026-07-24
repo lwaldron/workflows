@@ -10,7 +10,7 @@
 
 ## Decision
 
-We revert to tarball-based execution: `rcmdcheck::rcmdcheck()` is called with `check_dir = "check"` so that the package tarball is produced as a side-effect, and `BiocCheck::BiocCheck()` is then pointed at that tarball via `dir('check', 'tar.gz$', full.names = TRUE)`.
+We revert to tarball-based execution: `rcmdcheck::rcmdcheck()` is called with `check_dir = "check"` so that the package tarball is produced as a side-effect, and `BiocCheck::BiocCheck()` is then pointed at that tarball via `dir("check", pattern = "\\.tar\\.gz$", full.names = TRUE)`.
 
 ## Rationale
 
