@@ -309,6 +309,16 @@
                 </label>
             </div>
 
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="opt-cyclocomp">
+                    <div class="label-text-wrapper">
+                        <span>Enable Cyclocomp Analysis</span>
+                        <span class="help-text">Generates and uploads a cyclomatic complexity CSV artifact. See <a href="https://github.com/bioconductor/workflows/blob/main/bioccheck_usage.md#using-the-cyclocomp-artifact" target="_blank" style="color: var(--accent-primary); text-decoration: none;">usage guide</a>.</span>
+                    </div>
+                </label>
+            </div>
+
             <div class="form-group" style="margin-top: 32px;">
                 <div class="label-text-wrapper" style="margin-bottom: 8px;">
                     <span style="font-weight: 500;">Error Policy (R CMD check)</span>
@@ -342,18 +352,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             const elPkgdown = document.getElementById('opt-pkgdown');
             const elCodecov = document.getElementById('opt-codecov');
+            const elCyclocomp = document.getElementById('opt-cyclocomp');
             const elErrorOn = document.getElementById('opt-error-on');
             const elOutput = document.getElementById('yaml-output');
             const btnCopy = document.getElementById('copy-btn');
 
             // Listeners
-            [elPkgdown, elCodecov, elErrorOn].forEach(el => {
+            [elPkgdown, elCodecov, elCyclocomp, elErrorOn].forEach(el => {
                 el.addEventListener('change', generateYaml);
             });
 
             function generateYaml() {
                 const hasPkgdown = elPkgdown.checked;
                 const hasCodecov = elCodecov.checked;
+                const hasCyclocomp = elCyclocomp.checked;
                 const errorOn = elErrorOn.value;
 
                 // Build the JavaScript Object Model
@@ -382,6 +394,11 @@
 
                 // Add error_on parameter
                 workflowObj.jobs.bioccheck.with.error_on = errorOn;
+
+                // Add cyclocomp parameter if enabled
+                if (hasCyclocomp) {
+                    workflowObj.jobs.bioccheck.with.enable_cyclocomp = true;
+                }
 
                 // If 'with' is empty, remove it to keep yaml clean
                 if (Object.keys(workflowObj.jobs.bioccheck.with).length === 0) {
